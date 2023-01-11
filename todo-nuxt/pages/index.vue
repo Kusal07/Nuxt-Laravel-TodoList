@@ -10,11 +10,11 @@
                 <div class="row">
                     <div class="col-lg-8">
                         <div class="form-group">
-                            <input class="form-control" name="title" type="text" placeholder="Enter Task" required>
+                            <input class="form-control" name="title" type="text" placeholder="Enter Task" v-model="title" required>
                         </div>
                     </div>
                 <div class="col-lg-4">
-                    <button type="submit" class="btn btn-success">Submit</button>
+                    <button type="submit" class="btn btn-success" @click="submit">Submit</button>
                 </div>
                 </div>
             </form>
@@ -38,7 +38,9 @@
                           <span v-if="task.done==0" class="badge bg-warning">Not Completed</span>
                           <span v-else class="badge bg-success">Completed</span>
                         </td>
-                        <td>Action</td>
+                        <td>
+                          <button class="btn btn-danger" @click="deleteTodo(task.id)">Remove</button>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -54,15 +56,45 @@ export default {
   layout: 'dashboard',
   data() {
     return {
+      title:'',
       tasks:[],
     }
   },
   methods: {
     getTasks() {
       this.$axios.get('api/tasks').then(response=>{
-        this.tasks = response.data();
+        this.tasks = response.data;
       });
     },
+    submit:function(){
+      this.$nuxt.$loading.start();
+      this.$axios.post(`${this.$axios.defaults.baseURL}api/tasks`,{title:this.title}).then(res=>{
+        this.tasks.unshift(res.data);
+        this.title = '';
+      }).catch(error=>{
+        console.log(error);
+      }).finally(()=>{
+        // loader stop
+        this.$nuxt.$loading.finish();
+      });
+    },
+
+    deleteTodo:function(id){
+      this.$nuxt.$loading.start();
+      let api = `${this.$axios.defaults.baseURL}api/tasks/`+id;
+      this.$axios.delete(api).then(res=>{
+        if(res.data == true){
+          this.tasks.splice(i,1)
+        }
+      }).catch(error=>{
+        console.log(error);
+      }).finally(()=>{
+        // loader stop
+        this.$nuxt.$loading.finish();
+      });
+    },
+
+    
   },
   mounted(){
     this.getTasks();
